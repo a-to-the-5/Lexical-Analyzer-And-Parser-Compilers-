@@ -1,0 +1,234 @@
+import java_cup.runtime.*;  // definition of scanner/parser interface
+import java.io.*;
+class Helper
+{
+  public static void main(String args[]) throws IOException{
+    P4Analyzer ma = new P4Analyzer(new FileReader(new File("XAParser85.in")));
+	BufferedWriter bw = new BufferedWriter(new FileWriter(new File("My_XAParser85.out")));
+
+	while(true)
+	{
+		Symbol s = ma.next_token();
+		//System.out.println(s.sym+" "+sym.EOF);
+		if(s.sym==sym.EOF)break;
+			//System.out.println(s.toString()+"\r\n");
+		//else break;
+	}
+	bw.close();
+  }
+}
+%%
+%implements java_cup.runtime.Scanner
+%function next_token
+%type java_cup.runtime.Symbol
+
+%class P4Analyzer
+
+%eofval{
+  if(yy_lexical_state==STR){
+    report(STREOF);
+    yybegin(YYINITIAL);
+    return new Symbol(sym.SL, res+"\"");
+  }else{
+    return new Symbol(sym.EOF, null);
+   }
+%eofval}
+
+%{
+  public String tok;
+  public static final int AND = 0;
+  public static final int OR = 1;
+  public static final int STRNL = 2;
+  public static final int STREOF = 3;
+  static String res = "";
+  
+  static void report(int i){
+  }
+%}
+
+%line
+%char
+%state STR
+
+DIGIT=[0-9]
+NUMBER=({DIGIT})+
+NL=[\r\n]
+WHITE_SPACE=([\ \b\n\r\t\f])+
+ID=[a-zA-Z_][a-zA-Z_0-9]*
+
+%%
+
+
+<YYINITIAL> {NUMBER} { 
+  System.out.println(yytext());
+  return new Symbol(sym.NM, Double.parseDouble(tok = yytext()));
+}
+
+<YYINITIAL> {ID} {
+  System.out.println(yytext()); 
+  return new Symbol(sym.ID, yytext());
+}
+<YYINITIAL> "\"" {
+  res = "\"";
+  yybegin(STR);
+}
+
+<YYINITIAL> {WHITE_SPACE} { }
+
+<YYINITIAL> "else" { 
+  System.out.println("else");
+  return new Symbol(sym.ELSE, null);
+}
+
+<YYINITIAL> "func" { 
+  System.out.println("func");
+  return new Symbol(sym.FUNC, null);
+}
+
+<YYINITIAL> "if" { 
+  System.out.println("if");
+  return new Symbol(sym.IF, null);
+}
+
+<YYINITIAL> "in" {
+  System.out.println("in"); 
+  return new Symbol(sym.IN, null);
+}
+
+<YYINITIAL> "let" { 
+  System.out.println("let");
+  return new Symbol(sym.LET, null);
+}
+
+<YYINITIAL> "letrec" { 
+  System.out.println("letrec");
+  return new Symbol(sym.LETREC, null);
+}
+
+<YYINITIAL> "getInt" { 
+  System.out.println("getInt");
+  return new Symbol(sym.BF, "getInt");
+}
+
+<YYINITIAL> "getStr" {
+  System.out.println("getStr"); 
+  return new Symbol(sym.BF, "getStr");
+}
+
+<YYINITIAL> "not" { 
+  System.out.println("not");
+  return new Symbol(sym.BF, "not");
+}
+
+<YYINITIAL> "print" { 
+  System.out.println("print");
+  return new Symbol(sym.BF, "print");
+}
+
+<YYINITIAL> "+" {
+  System.out.println("+"); 
+  return new Symbol(sym.PO, null);
+}
+
+<YYINITIAL> "-" {
+  System.out.println("-"); 
+  return new Symbol(sym.MO, null);
+}
+
+<YYINITIAL> "*" {
+  System.out.println("*"); 
+  return new Symbol(sym.MB, null);
+}
+
+<YYINITIAL> "/" { 
+  System.out.println("/");
+  return new Symbol(sym.DB, null);
+}
+
+<YYINITIAL> "<" { 
+  System.out.println("<");
+  return new Symbol(sym.LT, null);
+}
+
+<YYINITIAL> ">" { 
+  System.out.println(">");
+  return new Symbol(sym.GT, null);
+}
+
+<YYINITIAL> "," { 
+  System.out.println(",");
+  return new Symbol(sym.FA, null);
+}
+
+<YYINITIAL> "&&" {
+  System.out.println("&&"); 
+  return new Symbol(sym.CA, null);
+}
+
+<YYINITIAL> "&" { 
+  System.out.println("&");
+  report(AND);
+  return new Symbol(sym.CA, null);
+}
+
+<YYINITIAL> "||" {
+  System.out.println("&&"); 
+  return new Symbol(sym.CO, null);
+}
+
+<YYINITIAL> "|" {
+  System.out.println("|");
+  report(OR); 
+  return new Symbol(sym.CO, null);
+}
+
+<YYINITIAL> "{" {
+  System.out.println("{"); 
+  return new Symbol(sym.LC, null);
+}
+
+<YYINITIAL> "}" {
+  System.out.println("}"); 
+  return new Symbol(sym.RC, null);
+}
+
+<YYINITIAL> "==" {
+  System.out.println("=="); 
+  return new Symbol(sym.EQ, null);
+}
+
+<YYINITIAL> "=" {
+  System.out.println("="); 
+  return new Symbol(sym.AO, null);
+}
+
+<YYINITIAL> ";" { 
+  System.out.println(";");
+  return new Symbol(sym.SM, null);
+}
+
+<YYINITIAL> "(" {
+  System.out.println("("); 
+  return new Symbol(sym.LB, null);
+}
+
+<YYINITIAL> ")" { 
+  System.out.println(")");
+  return new Symbol(sym.RB, null);
+}
+
+<STR> "\"" { 
+  yybegin(YYINITIAL);
+  System.out.println(res+"\"");
+  return new Symbol(sym.SL, res+"\"");
+}
+
+<STR> {NL} { 
+  report(STRNL);
+}
+
+<STR> . { 
+  res+= yytext();
+}
+
+<YYINITIAL> . {}

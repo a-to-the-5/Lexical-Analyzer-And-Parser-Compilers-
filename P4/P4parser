@@ -1,0 +1,107 @@
+// CUP specification for a simple expression evaluator (w/ actions)
+
+import java_cup.runtime.*;
+import java.io.*;
+import java.text.DecimalFormat;
+
+parser code{:
+	static BufferedWriter writer;
+	static int c;
+	
+	public static String roundDecimals(double d) {
+    	DecimalFormat twoDForm = new DecimalFormat("0.0000");
+    	return twoDForm.format(d);
+	}
+	
+	public static void main(String[] args) throws Exception{
+		parser p = new parser(new P4Analyzer(new BufferedReader(new FileReader(new File("XAParser85.in")))));
+		c = 1;
+		writer = new BufferedWriter(new FileWriter(new File("My_XAParser85.out")));
+		p.parse();
+		writer.close();
+	}
+:}
+
+/* Terminals (tokens returned by the scanner). */
+
+terminal 		   FA;
+terminal		   AO;
+terminal		   EQ, LT, GT;
+terminal           SM, PO, MO;
+terminal		   MB, DB;
+terminal		   CO;
+terminal 		   CA;
+terminal           LB, RB, LC, RC;
+terminal Double    NM;
+terminal		   ELSE, FUNC, IF, IN, LET, LETREC;
+terminal String    SL, ID, BF;
+
+/* Non-terminals */
+non terminal           all_expr, expr_part, comparison, expr_tail, expr_list, id_tail, term_tail;
+non terminal           arithmetic, term, primary, non_func_call, id_list, arguments_list, arithmetic_tail;
+non terminal           arguments,parameters, bindings, bindings_tail, binding, primary_tail, comparison_tail;
+non terminal Double    expr;
+
+/* Precedences 
+precedence left EQ, LT, GT;
+precedence left PO, MO;
+precedence left MB, DB;
+precedence left CO, CA;
+*/
+
+/* The grammar */
+all_expr ::= all_expr expr_part | expr_part;
+
+expr_part ::= expr 
+		{: parser.writer.write("[Statement "+parser.c++ +"]\r\nStatement parsed successfully.");
+		   parser.writer.flush(); :} SM;
+
+expr		  ::= comparison:c {: System.out.println(c); :} | comparison comparison_tail;
+
+comparison_tail::= CA comparison | CO comparison | CA comparison comparison_tail | CO comparison comparison_tail;
+
+comparison	  ::= arithmetic:a {: System.out.println(a); :} | arithmetic arithmetic_tail;
+
+arithmetic_tail::= LT arithmetic | GT arithmetic | EQ arithmetic  
+				   LT arithmetic arithmetic_tail | GT arithmetic arithmetic_tail |
+				   EQ arithmetic arithmetic_tail ;
+
+arithmetic	  ::= term:t {: System.out.println(t); :} | term term_tail;
+
+term_tail	  ::= PO term | MO term | PO term term_tail | MO term term_tail;
+
+term		  ::= primary:p {: System.out.println(p); :} | primary primary_tail;
+
+primary_tail  ::= MB primary | DB primary |  MB primary primary_tail | DB primary primary_tail;
+
+primary		  ::= non_func_call:n {: System.out.println(n); :} | non_func_call arguments_list;
+
+arguments_list::= arguments:a {: System.out.println(a); :} | arguments arguments_list;  
+
+non_func_call ::=  ID {: System.out.println("id"); :}
+				  |BF
+				  |SL
+				  |NM
+				  |LB expr RB
+				  |LET bindings IN expr {: System.out.println("yep"); :}
+				  |LETREC bindings IN expr
+				  |FUNC parameters LC expr RC
+				  |IF LB expr RB LC expr RC ELSE LC expr RC;
+
+parameters	  ::= LB RB | LB id_list RB;
+
+id_list		  ::= ID | ID id_tail;
+
+id_tail		  ::= FA ID | FA id_tail;
+				  
+arguments	  ::= LB expr_list RB;
+
+expr_list	  ::= expr | expr expr_tail;
+
+expr_tail	  ::= FA expr | FA expr_tail;
+
+bindings	  ::= binding:b {: System.out.println(b); :} | binding bindings_tail;
+
+bindings_tail ::= FA binding | FA bindings_tail;
+
+binding		  ::= ID AO expr {: System.out.println("boy"); :};
